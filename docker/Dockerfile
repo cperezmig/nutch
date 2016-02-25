@@ -28,13 +28,13 @@ RUN add-apt-repository -y ppa:webupd8team/java && apt-get update && apt-get upgr
 RUN echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && apt-get install -y oracle-java7-installer oracle-java7-set-default
 
 # Install various dependencies
-RUN apt-get install -y ant openssh-server vim telnet subversion rsync curl build-essential 
+RUN apt-get install -y ant openssh-server vim telnet subversion rsync curl build-essential git
 
 # Set up JAVA_HOME
 RUN echo 'export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")' >> $HOME/.bashrc
 
 # Checkout and build the nutch trunk
-RUN svn checkout https://svn.apache.org/repos/asf/nutch/trunk/ nutch_source && cd nutch_source && ant
+RUN git clone https://github.com/cperezmig/nutch.git nutch_source && cd nutch_source && cp myconf/* conf && ant
 
 # Convenience symlink to Nutch runtime local
 RUN ln -s nutch_source/runtime/local $HOME/nutch

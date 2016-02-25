@@ -55,7 +55,7 @@ public class MetadataIndexer implements IndexingFilter {
     // add the fields from crawldb
     if (dbFieldnames != null) {
       for (String metatag : dbFieldnames) {
-        Text metadata = (Text) datum.getMetaData().get(new Text(metatag));
+        Text metadata = new Text(datum.getMetaData().get(new Text(metatag)).toString());
         if (metadata != null)
           doc.add(metatag, metadata.toString());
       }

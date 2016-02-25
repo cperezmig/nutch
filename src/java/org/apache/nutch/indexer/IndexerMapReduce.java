@@ -217,6 +217,9 @@ public class IndexerMapReduce extends Configured implements
         if (deleteRobotsNoIndex) {
           // Get the robots meta data
           String robotsMeta = parseData.getMeta("robots");
+          if (robotsMeta == null) {
+              robotsMeta = parseData.getMeta("metatag.robots");
+          }
 
           // Has it a noindex for this url?
           if (robotsMeta != null
@@ -358,7 +361,8 @@ public class IndexerMapReduce extends Configured implements
         binary = Base64.encodeBase64String(StringUtils.getBytesUtf8(binary));
       }
 
-      doc.add("binaryContent", binary);
+      // doc.add("binaryContent", binary);
+      doc.add("binaryContent", Integer.toString((new String(content.getContent())).length()));
     }
 
     reporter.incrCounter("IndexerStatus", "indexed (add/update)", 1);

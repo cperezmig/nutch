@@ -141,6 +141,10 @@ public class DOMContentUtils {
       if ("style".equalsIgnoreCase(nodeName)) {
         walker.skipChildren();
       }
+      // Title is retrieved via getTitle(), so do not duplicate it in the body
+      if (currentNode != node && "title".equalsIgnoreCase(nodeName)) {
+          walker.skipChildren();
+      }
       if (abortOnNestedAnchors && "a".equalsIgnoreCase(nodeName)) {
         anchorDepth++;
         if (anchorDepth > 1) {

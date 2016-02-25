@@ -38,6 +38,14 @@
     <field dest="boost" source="boost"/>
     <field dest="digest" source="digest"/>
     <field dest="tstamp" source="tstamp"/>
+    <field dest="anchor" source="anchor"/>
+    <field dest="type" source="type"/>
+    <field dest="url" source="url"/>
+    <field dest="lang" source="lang"/>
+    <field dest="_rs_" source="_rs_"/>
+    <field dest="_depth_" source="_depth_"/>
+    <field dest="description" source="metatag.description"/>
+    <field dest="keywords" source="metatag.keywords"/>
   </fields>
   <uniqueKey>id</uniqueKey>
 </mapping>
