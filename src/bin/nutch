@@ -35,14 +35,6 @@
 #                   Multiple paths must be separated by a colon ':'.
 #
 
-export MESOS_NATIVE_LIBRARY=/usr/lib/libmesos.so
-export MESOS_NATIVE_JAVA_LIBRARY=/usr/lib/libmesos.so
-export HADOOP_HOME=/opt/hadoop
-export JAVA_HOME=/usr/lib/jvm/java-8-oracle
-export PATH=$PATH:$HADOOP_HOME/bin
-export PATH=$PATH:$HADOOP_HOME/sbin
-export NUTCH_HEAPSIZE=4000
-
 cygwin=false
 case "`uname`" in
 CYGWIN*) cygwin=true;;

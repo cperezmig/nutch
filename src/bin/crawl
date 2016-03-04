@@ -30,13 +30,6 @@
 # UNLIKE THE NUTCH ALL-IN-ONE-CRAWL COMMAND THIS SCRIPT DOES THE LINK INVERSION AND
 # INDEXING FOR EACH SEGMENT
 
-export MESOS_NATIVE_LIBRARY=/usr/lib/libmesos.so
-export MESOS_NATIVE_JAVA_LIBRARY=/usr/lib/libmesos.so
-export HADOOP_HOME=/opt/hadoop
-export JAVA_HOME=/usr/lib/jvm/java-8-oracle
-export PATH=$PATH:$HADOOP_HOME/bin
-export PATH=$PATH:$HADOOP_HOME/sbin
-
 INDEXFLAG=false
 JAVA_PROPERTIES=""
 WAIT=-1 # don't wait if there are no URLs to fetch
