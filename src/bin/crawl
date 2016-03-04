@@ -77,8 +77,22 @@ do
     esac
 done
 
+re="(http://[^/]+/solr)"
+# re="(http://.+/)"
+if $INDEXFLAG; then
+    if [[ $JAVA_PROPERTIES =~ $re ]]; then
+        SOLRINDEX=${BASH_REMATCH[1]};
+        NEW_UUID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+        curl $SOLRINDEX"/admin/cores?action=CREATE&name="$NEW_UUID"&configSet=nutch_conf&loadOnStartup=false&transient=true&wt=json"
+        echo "Creating new index in solr server: "$SOLRINDEX"/"$NEW_UUID
+    else
+        echo "Unable to find solr server"
+        exit 1
+    fi
+fi
+
 if [[ $# != 4 ]]; then
-    echo "Usage: crawl [-i|--index] [-D \"key=value\"] [-w|--wait] <Seed Dir> <Crawl Dir> <Num Rounds>"
+    echo "Usage: crawl [-i|--index] [-D \"key=value\"] [-w|--wait] <Seed Dir> <Crawl Dir> <Num Rounds> <Num Urls>"
     echo -e "\t-i|--index\tIndexes crawl results into a configured indexer"
     echo -e "\t-D\t\tA Java property to pass to Nutch calls"
     echo -e "\t-w|--wait\tNUMBER[SUFFIX] Time to wait before generating a new segment when no URLs"
@@ -88,13 +102,14 @@ if [[ $# != 4 ]]; then
     echo -e "\tSeed Dir\tDirectory in which to look for a seeds file"
     echo -e "\tCrawl Dir\tDirectory where the crawl/link/segments dirs are saved"
     echo -e "\tNum Rounds\tThe number of rounds to run this crawl for"
+    echo -e "\tNum URLs\tThe number of URLs to crawl"
     exit 1
 fi
 
 SEEDDIR="$1"
 CRAWL_PATH="$2"
 LIMIT="$3"
-TOFETCH="$4"
+TOCRAWL="$4"
 
 # convert wait time to seconds for compatibility reasons
 if [ "$WAIT" != "-1" ]; then
@@ -107,7 +122,7 @@ fi
 #############################################
 
 # set the number of slaves nodes
-numSlaves=8
+numSlaves=4
 
 # and the total number of available tasks
 # sets Hadoop parameter "mapreduce.job.reduces"
@@ -170,33 +185,12 @@ echo "Injecting seed URLs"
 __bin_nutch inject "$CRAWL_PATH"/crawldb "$SEEDDIR"
 
 # main loop : rounds of generate - fetch - parse - update
-unfetched=$TOFETCH
-fetched=0
-finished=0
-aux_fetch=$(echo "$TOFETCH * 1.2" | bc)
-aux_fetch=${aux_fetch%.*}
 for ((a=1; ; a++))
 do
   if [ -e ".STOP" ]
   then
    echo "STOP file found - escaping loop"
    break
-  fi
-
-  if [ $finished -ne 0 ]; then
-      echo `date` ": Finished loop with $LIMIT iterations and $fetched fetched URLs"
-      break
-  else
-      echo `date` ": still $unfetched URLs to fetch"
-  fi
-  echo "fetched: $fetched"
-  echo "aux_fetch: $aux_fetch"
-  if [ $fetched -gt $aux_fetch ]; then
-      echo `date` ": Finishing loop with $LIMIT iterations and $fetched fetched URLs"
-      # finished=1
-      break
-  else
-      echo `date` ": still $unfetched URLs to fetch"
   fi
 
   if [ $LIMIT -ne -1 ]; then
@@ -268,14 +262,24 @@ do
 
   echo "Dedup on crawldb"
   __bin_nutch dedup "$CRAWL_PATH"/crawldb
-
-  fetched=$(__bin_nutch readdb "$CRAWL_PATH"/crawldb -stats 2>&1 | grep db_fetched | rev |  cut -d':' -f 1 | rev | sed -e 's/^[ \t]*//')
-  if [ -z "$fetched" ]; then
-      fetched=0
+  
+  if $INDEXFLAG; then
+      __bin_nutch index -D solr.server.url=$SOLRINDEX"/"$NEW_UUID"/" "$CRAWL_PATH"/crawldb -linkdb "$CRAWL_PATH"/linkdb "$CRAWL_PATH"/segments/$SEGMENT -deleteGone
+      __bin_nutch clean -D solr.server.url=$SOLRINDEX"/"$NEW_UUID"/" "$CRAWL_PATH"/crawldb
+      re="\"numFound\":([0-9]+),"
+      outCurl=$(curl $SOLRINDEX"/"$NEW_UUID"/select?q=*%3A*&rows=0&start=0&wt=json&indent=true")
+      if [[ $outCurl =~ $re ]]; then
+          numFound=${BASH_REMATCH[1]};
+      else
+          echo "Unable to find solr index"
+          exit 1
+      fi
+      if [[ $numFound -ge $TOCRAWL ]]; then
+          echo `date` ": Finished loop with $LIMIT iterations and $numFound URLs indexed"
+          curl $SOLRINDEX"/admin/cores?action=UNLOAD&core="$NEW_UUID"&deleteInstanceDir=true&wt=json"
+          break
+      fi
   fi
-  echo "Fetched urls: $fetched"
-  unfetched=$(($TOFETCH - $fetched))
-  echo "Unfetched urls: $unfetched"
 done
 
 #######################################################

@@ -35,6 +35,8 @@
 #                   Multiple paths must be separated by a colon ':'.
 #
 
+export NUTCH_HEAPSIZE=4000
+
 cygwin=false
 case "`uname`" in
 CYGWIN*) cygwin=true;;
