@@ -30,6 +30,8 @@
 # UNLIKE THE NUTCH ALL-IN-ONE-CRAWL COMMAND THIS SCRIPT DOES THE LINK INVERSION AND
 # INDEXING FOR EACH SEGMENT
 
+export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
+
 INDEXFLAG=false
 JAVA_PROPERTIES=""
 WAIT=-1 # don't wait if there are no URLs to fetch

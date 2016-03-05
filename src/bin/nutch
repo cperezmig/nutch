@@ -36,6 +36,7 @@
 #
 
 export NUTCH_HEAPSIZE=4000
+export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
 
 cygwin=false
 case "`uname`" in
